@@ -46,6 +46,26 @@ case "${1:-main}" in
   wiki)
     site wiki.syntropy.test-rms.ru
     ;;
+  outline)
+    grep -q OUTLINE_SECRET_KEY .env || cat >> .env <<EOF2
+OUTLINE_DB_PASSWORD=$(openssl rand -hex 16)
+OUTLINE_SECRET_KEY=$(openssl rand -hex 32)
+OUTLINE_UTILS_SECRET=$(openssl rand -hex 32)
+# SMTP для писем со ссылкой на вход; пока заглушка mailpit в том же compose
+SMTP_HOST=outline-mail
+SMTP_PORT=1025
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=outline@syntropy.test-rms.ru
+SMTP_SECURE=false
+EOF2
+    docker compose -f docker-compose.outline.yml pull -q
+    docker compose -f docker-compose.outline.yml up -d
+    docker compose -f docker-compose.outline.yml ps
+    ;;
+  outline-site)
+    site outline.syntropy.test-rms.ru
+    ;;
   bookstack)
     grep -q BOOKSTACK_APP_KEY .env || cat >> .env <<EOF2
 BOOKSTACK_DB_PASSWORD=$(openssl rand -hex 16)
