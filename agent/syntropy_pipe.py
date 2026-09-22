@@ -1,15 +1,13 @@
 """
 title: Синтропия
 author: Корнилов Владимир
-version: 0.1.0
+version: 0.1.1
 description: Чат в рамках эпика. Первое сообщение нового чата — окно «Выберите эпик» со списком из базы знаний Outline; без эпика модель не вызывается. Дальше в каждый запрос подкладываются эпик и его страницы требований.
 """
 from __future__ import annotations
 import json
 import os
-import re
 import time
-from typing import AsyncGenerator, Optional
 
 import requests
 from pydantic import BaseModel, Field
@@ -68,8 +66,7 @@ class Pipe:
         parts = [f"# {ep['title']}\n{ep['text']}"]
         for ch in self._ol("documents.list", {"parentDocumentId": epic_id, "limit": 50})["data"]:
             parts.append(f"\n# {ch['title']}\n{ch['text']}")
-        ctx = "\n".join(parts)
-        return ctx[: self.valves.MAX_CONTEXT_CHARS]
+        return "\n".join(parts)[: self.valves.MAX_CONTEXT_CHARS]
 
     def _create_epic(self, name: str) -> dict:
         cid = self._collection_id()
@@ -101,20 +98,24 @@ class Pipe:
             if delta:
                 yield delta
 
+    @staticmethod
+    def _text(content) -> str:
+        if isinstance(content, list):
+            return " ".join(p.get("text", "") for p in content if isinstance(p, dict))
+        return content or ""
+
     # ---------- главный вход ----------
     async def pipe(self, body: dict, __user__: dict | None = None, __metadata__: dict | None = None,
                    __event_emitter__=None, __event_call__=None):
         md = __metadata__ or {}
-        chat_id = md.get("chat_id") or "no-chat"
+        chat_id = md.get("chat_id") or ""
+        in_ui = bool(chat_id)
         messages = body.get("messages", [])
-        user_msg = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
-        if isinstance(user_msg, list):  # мультимодальные сообщения
-            user_msg = " ".join(p.get("text", "") for p in user_msg if isinstance(p, dict))
+        user_msg = self._text(next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")).strip()
         st = self._load()
-        bound = st.get(chat_id)
+        bound = st.get(chat_id) if in_ui else None
 
-        # смена эпика по команде
-        if user_msg.strip().lower() in ("/эпик", "/epic", "сменить эпик"):
+        if user_msg.lower() in ("/эпик", "/epic", "сменить эпик"):
             bound = None
 
         if not bound:
@@ -122,33 +123,49 @@ class Pipe:
                 epics = self._epics()
             except Exception as e:
                 return f"Не могу прочитать список эпиков из базы знаний: {e}"
-            lines = [f"{i + 1}. {d['title']}" for i, d in enumerate(epics)]
-            lines.append("0. Создать новый эпик")
-            menu = "\n".join(lines)
-            choice = None
-            if __event_call__:
+            menu = "\n".join([f"{i + 1}. {d['title']}" for i, d in enumerate(epics)] + ["0. Создать новый эпик"])
+
+            # 1) ответ уже в тексте сообщения: «3» или «новый: Батарея»
+            choice, new_name = "", ""
+            if user_msg.isdigit():
+                choice = user_msg
+            elif user_msg.lower().startswith("новый:"):
+                choice, new_name = "0", user_msg.split(":", 1)[1].strip()
+            # 2) иначе — окно в интерфейсе
+            if not choice and __event_call__ and in_ui:
                 try:
-                    choice = await __event_call__({"type": "input", "data": {
+                    res = await __event_call__({"type": "input", "data": {
                         "title": "В рамках какого эпика работаем?",
                         "message": "Без эпика Синтропия не работает: всё, что обсуждается, ложится в его структуру.\n\n" + menu,
-                        "placeholder": "номер эпика"}})
+                        "placeholder": "номер эпика или «новый: название»"}})
                 except Exception:
-                    choice = None
-            if choice is None or str(choice).strip() == "":
-                return "**Выберите эпик**, без него работать нельзя. Напишите номер из списка:\n\n" + menu
-            choice = str(choice).strip()
-            if choice == "0" or not choice.isdigit():
-                name = choice if not choice.isdigit() else None
-                if not name and __event_call__:
-                    name = await __event_call__({"type": "input", "data": {"title": "Название нового эпика", "message": "Коротко, как проект: «Байк», «Батарея», «Перчатка».", "placeholder": "название"}})
-                if not name:
-                    return "Название не задано. Напишите номер эпика из списка или название нового:\n\n" + menu
-                d = self._create_epic(str(name).strip())
+                    res = None
+                if isinstance(res, str):
+                    res = res.strip()
+                    if res.isdigit():
+                        choice = res
+                    elif res.lower().startswith("новый:"):
+                        choice, new_name = "0", res.split(":", 1)[1].strip()
+                    elif res:
+                        choice, new_name = "0", res      # написали просто название
+            if not choice:
+                return "**Выберите эпик**, без него работать нельзя. Напишите номер из списка или «новый: название»:\n\n" + menu
+            if not in_ui:
+                return "Привязать эпик можно только к чату в интерфейсе. Список эпиков:\n\n" + menu
+
+            if choice == "0":
+                if not new_name and __event_call__:
+                    res = await __event_call__({"type": "input", "data": {"title": "Название нового эпика", "message": "Коротко, как проект: «Байк», «Батарея», «Перчатка».", "placeholder": "название"}})
+                    new_name = res.strip() if isinstance(res, str) else ""
+                if not new_name:
+                    return "Название не задано. Напишите «новый: название» или номер эпика из списка:\n\n" + menu
+                d = self._create_epic(new_name)
                 bound = {"id": d["id"], "title": d["title"], "url": self.valves.OUTLINE_URL + d["url"], "since": int(time.time())}
                 st[chat_id] = bound
                 self._save(st)
                 return (f"Создан эпик **{d['title']}**: {bound['url']}\n\nЧат привязан к нему. Заполните на странице суть и точки проекта, "
                         f"а требования начнут появляться по ходу работы. Что делаем?")
+
             idx = int(choice) - 1
             if idx < 0 or idx >= len(epics):
                 return "Такого номера нет. Список эпиков:\n\n" + menu
@@ -158,7 +175,7 @@ class Pipe:
             self._save(st)
             if __event_emitter__:
                 await __event_emitter__({"type": "status", "data": {"description": f"Эпик: {d['title']}", "done": True}})
-            if not user_msg.strip() or user_msg.strip().isdigit():
+            if not user_msg or user_msg.isdigit():
                 return f"Работаем в рамках **{d['title']}** ({bound['url']}). Что делаем?"
 
         # ---- работа в рамках эпика: контекст + модель ----
