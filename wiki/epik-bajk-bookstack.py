@@ -8,7 +8,7 @@ import bookstack
 # подгружаем тексты из соседнего скрипта без публикации в Wiki.js
 src = open(os.path.join(here, "epik-bajk.py"), encoding="utf-8").read()
 src = src[:src.index("print(wikijs.publish")]
-ns = {}
+ns = {"__file__": os.path.join(here, "epik-bajk.py")}
 exec(compile(src, "epik-bajk", "exec"), ns)
 epic, req, etapy, E = ns["epic"], ns["req"], ns["etapy"], ns["E"]
 
