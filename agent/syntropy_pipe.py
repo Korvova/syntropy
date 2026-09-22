@@ -1,7 +1,7 @@
 """
 title: Синтропия
 author: Корнилов Владимир
-version: 0.1.2
+version: 0.1.3
 description: Чат в рамках эпика. Первое сообщение нового чата — окно «Выберите эпик» со списком из базы знаний Outline; без эпика модель не вызывается. Дальше в каждый запрос подкладываются эпик и его страницы требований.
 """
 from __future__ import annotations
@@ -169,6 +169,11 @@ class Pipe:
 
             # 1) ответ уже в тексте сообщения: «3» или «новый: Батарея»
             choice, new_name = "", ""
+            for i, d in enumerate(epics):                      # клик по кнопке-подсказке: «1. Заголовок» или сам заголовок
+                if user_msg == d["title"] or user_msg == f"{i + 1}. {d['title']}":
+                    choice = str(i + 1)
+            if user_msg.lower() in ("создать новый эпик", "новый эпик"):
+                choice = "0"
             if user_msg.isdigit():
                 choice = user_msg
             elif user_msg.lower().startswith("новый:"):
@@ -208,7 +213,10 @@ class Pipe:
                         elif res:
                             choice, new_name = "0", res      # написали просто название
             if not choice:
-                return "**Выберите эпик**, без него работать нельзя. Напишите номер из списка или «новый: название»:\n\n" + menu
+                if __event_emitter__ and in_ui:                # кнопки под ответом: клик отправляет выбор
+                    await __event_emitter__({"type": "chat:message:follow_ups", "data": {
+                        "follow_ups": [f"{i + 1}. {d['title']}" for i, d in enumerate(epics)] + ["Создать новый эпик"]}})
+                return "**Выберите эпик**, без него работать нельзя. Нажмите кнопку ниже или напишите номер из списка либо «новый: название»:\n\n" + menu
             if not in_ui:
                 return "Привязать эпик можно только к чату в интерфейсе. Список эпиков:\n\n" + menu
 
