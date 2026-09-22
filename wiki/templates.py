@@ -81,7 +81,7 @@ _Статусы: ⬜ Не куплено · ⌛ Заказано · ✅ Полу
 
 col = outline.collection("Синтропия")
 def template(title, text):
-    d = next((x for x in outline.api("documents.list", {"collectionId": col["id"], "template": True, "limit": 50})["data"] if x["title"] == title), None)
+    d = next((x for x in outline.api("documents.list", {"collectionId": col["id"], "limit": 100})["data"] if x["title"] == title), None)
     if d:
         return outline.api("documents.update", {"id": d["id"], "title": title, "text": text, "publish": True})["data"]
     return outline.api("documents.create", {"collectionId": col["id"], "title": title, "text": text, "template": True, "publish": True})["data"]
