@@ -30,10 +30,21 @@ server {
         proxy_read_timeout 300s;
     }
 
+    # скрипт пункта «База знаний» в боковой панели (подставляется в html ниже)
+    location = /syntropy/sidebar-link.js {
+        alias /var/www/syntropy.test-rms.ru/webui/sidebar-link.js;
+        add_header Cache-Control "no-cache";
+    }
+
     # Open WebUI (чат Синтропии)
     location / {
         proxy_pass http://127.0.0.1:3100;
         proxy_http_version 1.1;
+        # вставка скрипта без правки исходников чата
+        proxy_set_header Accept-Encoding "";
+        sub_filter_once on;
+        sub_filter_types text/html;
+        sub_filter '</head>' '<script src="/syntropy/sidebar-link.js" defer></script></head>';
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
