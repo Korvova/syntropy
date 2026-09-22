@@ -1,0 +1,15 @@
+# Шлюз к моделям. Ключи — только из .env, в репозиторий не попадают.
+# Пока ключ не выдан, список пуст — Open WebUI поднимается, но моделей не покажет.
+model_list:
+  - model_name: astra
+    litellm_params:
+      model: openai/gpt-4.1
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: os.environ/OPENAI_API_BASE
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+litellm_settings:
+  drop_params: true
+  request_timeout: 300

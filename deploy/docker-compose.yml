@@ -1,0 +1,61 @@
+# Контур Синтропии: чат (Open WebUI) → шлюз к моделям (LiteLLM) → база знаний (Wiki.js).
+# Всё на loopback, наружу отдаёт nginx. Папка проекта: /var/www/syntropy.test-rms.ru
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: syntropy-litellm
+    restart: unless-stopped
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml:ro
+    env_file: .env
+    ports:
+      - "127.0.0.1:4000:4000"
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: syntropy-webui
+    restart: unless-stopped
+    depends_on: [litellm]
+    environment:
+      WEBUI_URL: https://syntropy.test-rms.ru
+      WEBUI_NAME: Синтропия
+      OPENAI_API_BASE_URL: http://litellm:4000/v1
+      OPENAI_API_KEY: ${LITELLM_MASTER_KEY}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      DEFAULT_LOCALE: ru-RU
+      ENABLE_OLLAMA_API: "false"
+    volumes:
+      - webui-data:/app/backend/data
+    ports:
+      - "127.0.0.1:3100:8080"
+
+  wikidb:
+    image: postgres:16-alpine
+    container_name: syntropy-wikidb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: wiki
+      POSTGRES_PASSWORD: ${WIKI_DB_PASSWORD}
+    volumes:
+      - wikidb-data:/var/lib/postgresql/data
+
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    container_name: syntropy-wiki
+    restart: unless-stopped
+    depends_on: [wikidb]
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: wikidb
+      DB_PORT: 5432
+      DB_USER: wiki
+      DB_PASS: ${WIKI_DB_PASSWORD}
+      DB_NAME: wiki
+    ports:
+      - "127.0.0.1:3200:3000"
+
+volumes:
+  webui-data:
+  wikidb-data:
