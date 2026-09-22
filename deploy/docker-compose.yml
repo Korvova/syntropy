@@ -1,4 +1,4 @@
-# Контур Синтропии: чат (Open WebUI) → шлюз к моделям (LiteLLM) → база знаний (Wiki.js).
+# Контур Синтропии: чат (Open WebUI) → шлюз к моделям (LiteLLM). База знаний — Outline (docker-compose.outline.yml).
 # Всё на loopback, наружу отдаёт nginx. Папка проекта: /var/www/syntropy.test-rms.ru
 services:
   litellm:
@@ -30,32 +30,5 @@ services:
     ports:
       - "127.0.0.1:3100:8080"
 
-  wikidb:
-    image: postgres:16-alpine
-    container_name: syntropy-wikidb
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: wiki
-      POSTGRES_USER: wiki
-      POSTGRES_PASSWORD: ${WIKI_DB_PASSWORD}
-    volumes:
-      - wikidb-data:/var/lib/postgresql/data
-
-  wiki:
-    image: ghcr.io/requarks/wiki:2
-    container_name: syntropy-wiki
-    restart: unless-stopped
-    depends_on: [wikidb]
-    environment:
-      DB_TYPE: postgres
-      DB_HOST: wikidb
-      DB_PORT: 5432
-      DB_USER: wiki
-      DB_PASS: ${WIKI_DB_PASSWORD}
-      DB_NAME: wiki
-    ports:
-      - "127.0.0.1:3200:3000"
-
 volumes:
   webui-data:
-  wikidb-data:
