@@ -46,4 +46,15 @@ case "${1:-main}" in
   wiki)
     site wiki.syntropy.test-rms.ru
     ;;
+  bookstack)
+    grep -q BOOKSTACK_APP_KEY .env || cat >> .env <<EOF2
+BOOKSTACK_DB_PASSWORD=$(openssl rand -hex 16)
+BOOKSTACK_APP_KEY=base64:$(openssl rand -base64 32)
+EOF2
+    docker compose -f docker-compose.bookstack.yml pull -q
+    docker compose -f docker-compose.bookstack.yml up -d
+    cp nginx/syntropy.test-rms.ru /etc/nginx/sites-available/syntropy.test-rms.ru
+    nginx -t && systemctl reload nginx
+    docker compose -f docker-compose.bookstack.yml ps
+    ;;
 esac
