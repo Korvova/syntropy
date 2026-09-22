@@ -1,4 +1,4 @@
-# Outline — база знаний с деревом документов (коллекция → документ → вложенные). Домен outline.syntropy.test-rms.ru.
+# Outline — база знаний с деревом документов (коллекция → документ → вложенные). Домен wiki.syntropy.test-rms.ru (вместо Wiki.js).
 # Вход по письму со ссылкой (SMTP в .env) или через OIDC (Битрикс24 через Keycloak — позже).
 services:
   outline-db:
@@ -33,7 +33,7 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
-      URL: https://outline.syntropy.test-rms.ru
+      URL: https://wiki.syntropy.test-rms.ru
       PORT: 3000
       DATABASE_URL: postgres://outline:${OUTLINE_DB_PASSWORD}@outline-db:5432/outline
       PGSSLMODE: disable
@@ -43,7 +43,7 @@ services:
       FILE_STORAGE: local
       FILE_STORAGE_LOCAL_ROOT_DIR: /var/lib/outline/data
       FILE_STORAGE_UPLOAD_MAX_SIZE: 104857600
-      DEFAULT_LANGUAGE: ru_RU
+      DEFAULT_LANGUAGE: en_US   # русского в Outline нет
       FORCE_HTTPS: "true"
       # вход по письму
       SMTP_HOST: ${SMTP_HOST}

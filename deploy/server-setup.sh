@@ -64,7 +64,8 @@ EOF2
     docker compose -f docker-compose.outline.yml ps
     ;;
   outline-site)
-    site outline.syntropy.test-rms.ru
+    docker compose stop wiki wikidb 2>/dev/null || true
+    site wiki.syntropy.test-rms.ru
     ;;
   bookstack)
     grep -q BOOKSTACK_APP_KEY .env || cat >> .env <<EOF2
