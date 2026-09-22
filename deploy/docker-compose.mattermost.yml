@@ -1,0 +1,61 @@
+# Mattermost Team Edition (бесплатная) — мессенджер-«точка проекта». Домен mm.syntropy.test-rms.ru.
+# У Политеха Mattermost в плане «лёгкого» сервера, здесь — копия, чтобы пощупать и подключить наблюдателя агента.
+services:
+  mm-db:
+    image: postgres:16-alpine
+    container_name: syntropy-mm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mattermost
+      POSTGRES_USER: mmuser
+      POSTGRES_PASSWORD: ${MM_DB_PASSWORD}
+    volumes:
+      - mm-db:/var/lib/postgresql/data
+
+  mattermost:
+    image: mattermost/mattermost-team-edition:10.5
+    container_name: syntropy-mattermost
+    restart: unless-stopped
+    depends_on: [mm-db]
+    ports:
+      - "127.0.0.1:3500:8065"
+    environment:
+      TZ: Europe/Moscow
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${MM_DB_PASSWORD}@mm-db:5432/mattermost?sslmode=disable&connect_timeout=10
+      MM_SERVICESETTINGS_SITEURL: https://mm.syntropy.test-rms.ru
+      MM_SERVICESETTINGS_ENABLELOCALMODE: "true"
+      MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
+      # регистрация открыта: первый вошедший становится администратором
+      MM_TEAMSETTINGS_ENABLEOPENSERVER: "true"
+      MM_LOCALIZATIONSETTINGS_DEFAULTSERVERLOCALE: ru
+      MM_LOCALIZATIONSETTINGS_DEFAULTCLIENTLOCALE: ru
+      MM_LOCALIZATIONSETTINGS_AVAILABLELOCALES: ru,en
+      # письма через тот же Postfix, что и у Outline (сеть outline compose-файла)
+      MM_EMAILSETTINGS_SMTPSERVER: syntropy-outline-mail
+      MM_EMAILSETTINGS_SMTPPORT: "587"
+      MM_EMAILSETTINGS_FEEDBACKEMAIL: mattermost@syntropy.test-rms.ru
+      MM_EMAILSETTINGS_REPLYTOADDRESS: mattermost@syntropy.test-rms.ru
+      MM_EMAILSETTINGS_REQUIREEMAILVERIFICATION: "false"
+    volumes:
+      - mm-config:/mattermost/config
+      - mm-data:/mattermost/data
+      - mm-logs:/mattermost/logs
+      - mm-plugins:/mattermost/plugins
+      - mm-client-plugins:/mattermost/client/plugins
+      - mm-bleve:/mattermost/bleve-indexes
+    networks: [default, outline]
+
+networks:
+  outline:
+    name: syntropytest-rmsru_default
+    external: true
+
+volumes:
+  mm-db:
+  mm-config:
+  mm-data:
+  mm-logs:
+  mm-plugins:
+  mm-client-plugins:
+  mm-bleve:

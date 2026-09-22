@@ -63,6 +63,15 @@ EOF2
     docker compose -f docker-compose.outline.yml up -d
     docker compose -f docker-compose.outline.yml ps
     ;;
+  mattermost)
+    grep -q MM_DB_PASSWORD .env || echo "MM_DB_PASSWORD=$(openssl rand -hex 16)" >> .env
+    docker compose -f docker-compose.mattermost.yml pull -q
+    docker compose -f docker-compose.mattermost.yml up -d
+    docker compose -f docker-compose.mattermost.yml ps
+    ;;
+  mattermost-site)
+    site mm.syntropy.test-rms.ru
+    ;;
   outline-site)
     docker compose stop wiki wikidb 2>/dev/null || true
     site wiki.syntropy.test-rms.ru
