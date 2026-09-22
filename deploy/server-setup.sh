@@ -51,9 +51,9 @@ case "${1:-main}" in
 OUTLINE_DB_PASSWORD=$(openssl rand -hex 16)
 OUTLINE_SECRET_KEY=$(openssl rand -hex 32)
 OUTLINE_UTILS_SECRET=$(openssl rand -hex 32)
-# SMTP для писем со ссылкой на вход; пока заглушка mailpit в том же compose
+# SMTP для писем со ссылкой на вход: Postfix «только отправка» в том же compose
 SMTP_HOST=outline-mail
-SMTP_PORT=1025
+SMTP_PORT=587
 SMTP_USERNAME=
 SMTP_PASSWORD=
 SMTP_FROM_EMAIL=outline@syntropy.test-rms.ru

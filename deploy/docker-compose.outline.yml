@@ -18,12 +18,17 @@ services:
     restart: unless-stopped
 
   outline-mail:
-    # почтовая заглушка: письма со ссылкой на вход ловятся здесь, веб на 127.0.0.1:8026 (пока нет настоящего SMTP)
-    image: axllent/mailpit:latest
+    # настоящий SMTP «только отправка»: Postfix шлёт письма со ссылкой на вход напрямую получателям
+    image: boky/postfix:latest
     container_name: syntropy-outline-mail
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:8026:8025"
+    environment:
+      HOSTNAME: syntropy.test-rms.ru
+      ALLOWED_SENDER_DOMAINS: syntropy.test-rms.ru test-rms.ru
+      POSTFIX_myhostname: syntropy.test-rms.ru
+      DKIM_AUTOGENERATE: "true"
+    volumes:
+      - outline-dkim:/etc/opendkim/keys
 
   outline:
     image: docker.getoutline.com/outlinewiki/outline:latest
@@ -60,3 +65,4 @@ services:
 volumes:
   outline-db:
   outline-data:
+  outline-dkim:
