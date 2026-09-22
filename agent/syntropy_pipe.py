@@ -59,7 +59,7 @@ class Pipe:
     def _epics(self) -> list[dict]:
         cid = self._collection_id()
         docs = self._ol("documents.list", {"collectionId": cid, "parentDocumentId": None, "limit": 100})["data"]
-        return [d for d in docs if "Эпик" in d["title"] and not d.get("template")]
+        return [d for d in docs if "Эпик" in d["title"] and not d.get("template") and not d["title"].startswith("Шаблон")]
 
     def _epic_context(self, epic_id: str) -> str:
         ep = self._ol("documents.info", {"id": epic_id})["data"]
