@@ -23,9 +23,9 @@ services:
     container_name: syntropy-outline-mail
     restart: unless-stopped
     environment:
-      HOSTNAME: syntropy.test-rms.ru
-      ALLOWED_SENDER_DOMAINS: syntropy.test-rms.ru test-rms.ru
-      POSTFIX_myhostname: syntropy.test-rms.ru
+      HOSTNAME: ${MAIL_DOMAIN}
+      ALLOWED_SENDER_DOMAINS: ${MAIL_DOMAIN}
+      POSTFIX_myhostname: ${MAIL_DOMAIN}
       DKIM_AUTOGENERATE: "true"
     volumes:
       - outline-dkim:/etc/opendkim/keys
@@ -38,7 +38,7 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
-      URL: https://wiki.syntropy.test-rms.ru
+      URL: https://${WIKI_HOST}
       PORT: 3000
       DATABASE_URL: postgres://outline:${OUTLINE_DB_PASSWORD}@outline-db:5432/outline
       PGSSLMODE: disable

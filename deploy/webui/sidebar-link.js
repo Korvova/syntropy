@@ -1,6 +1,6 @@
 // Пункт «База знаний» в боковой панели Open WebUI. Подставляется nginx-ом, исходники чата не меняются.
 (function () {
-  const URL_KB = "https://wiki.syntropy.test-rms.ru";
+  const URL_KB = "__WIKI_URL__";
   const LABEL = "База знаний";
   function inject() {
     if (document.getElementById("syntropy-kb-link")) return;

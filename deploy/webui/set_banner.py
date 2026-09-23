@@ -5,7 +5,7 @@ import json, sqlite3, time, uuid
 
 DB = "/app/backend/data/webui.db"
 BANNER = {"id": str(uuid.uuid4()), "type": "info", "title": "База знаний",
-          "content": "База знаний проектов: [wiki.syntropy.test-rms.ru](https://wiki.syntropy.test-rms.ru)",
+          "content": "База знаний проектов: [__WIKI_HOST__](https://__WIKI_HOST__)",
           "dismissible": False, "timestamp": int(time.time())}
 
 con = sqlite3.connect(DB)

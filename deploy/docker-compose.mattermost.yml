@@ -23,7 +23,7 @@ services:
       TZ: Europe/Moscow
       MM_SQLSETTINGS_DRIVERNAME: postgres
       MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${MM_DB_PASSWORD}@mm-db:5432/mattermost?sslmode=disable&connect_timeout=10
-      MM_SERVICESETTINGS_SITEURL: https://mm.syntropy.test-rms.ru
+      MM_SERVICESETTINGS_SITEURL: https://${MM_HOST}
       MM_SERVICESETTINGS_ENABLELOCALMODE: "true"
       MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
       # регистрация открыта: первый вошедший становится администратором
@@ -34,8 +34,8 @@ services:
       # письма через тот же Postfix, что и у Outline (сеть outline compose-файла)
       MM_EMAILSETTINGS_SMTPSERVER: syntropy-outline-mail
       MM_EMAILSETTINGS_SMTPPORT: "587"
-      MM_EMAILSETTINGS_FEEDBACKEMAIL: mattermost@syntropy.test-rms.ru
-      MM_EMAILSETTINGS_REPLYTOADDRESS: mattermost@syntropy.test-rms.ru
+      MM_EMAILSETTINGS_FEEDBACKEMAIL: mattermost@${MAIL_DOMAIN}
+      MM_EMAILSETTINGS_REPLYTOADDRESS: mattermost@${MAIL_DOMAIN}
       MM_EMAILSETTINGS_REQUIREEMAILVERIFICATION: "false"
     volumes:
       - mm-config:/mattermost/config
@@ -48,7 +48,7 @@ services:
 
 networks:
   outline:
-    name: syntropytest-rmsru_default
+    name: ${COMPOSE_NETWORK:-syntropytest-rmsru_default}
     external: true
 
 volumes:

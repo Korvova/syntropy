@@ -38,7 +38,7 @@ litellm_key = ""
 if "--litellm-key" in sys.argv:
     litellm_key = sys.argv[sys.argv.index("--litellm-key") + 1]
 valves = {
-    "OUTLINE_URL": "https://wiki.syntropy.test-rms.ru",
+    "OUTLINE_URL": os.environ.get("OUTLINE_URL", "https://wiki.syntropy.test-rms.ru"),
     "OUTLINE_TOKEN": open(os.path.join(ROOT, ".secrets", "outline_token")).read().strip(),
     "COLLECTION": "Синтропия",
     "LITELLM_URL": "http://litellm:4000/v1",

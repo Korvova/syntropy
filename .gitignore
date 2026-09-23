@@ -3,3 +3,5 @@
 node_modules/
 __pycache__/
 .secrets/
+deploy/webui/sidebar-link.rendered.js
+deploy/certs/

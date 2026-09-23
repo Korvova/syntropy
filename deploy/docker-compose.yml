@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
     depends_on: [litellm]
     environment:
-      WEBUI_URL: https://syntropy.test-rms.ru
+      WEBUI_URL: https://${CHAT_HOST}
       WEBUI_NAME: Синтропия
       OPENAI_API_BASE_URL: http://litellm:4000/v1
       OPENAI_API_KEY: ${LITELLM_MASTER_KEY}
