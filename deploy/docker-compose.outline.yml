@@ -31,7 +31,7 @@ services:
       - outline-dkim:/etc/opendkim/keys
 
   outline:
-    image: docker.getoutline.com/outlinewiki/outline:latest
+    image: outlinewiki/outline:latest
     container_name: syntropy-outline
     restart: unless-stopped
     depends_on: [outline-db, outline-redis, outline-mail]
